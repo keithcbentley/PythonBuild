@@ -3,33 +3,40 @@ import subprocess
 from typing import TextIO
 from pathlib import Path
 
-def generate_cpp_source_filenames():
-    pass
+
+
+g_build_dir:Path
+
+def make_build_dir():
+    global g_build_dir
+    g_build_dir=Path(os.getcwd()) / "build/"
+    g_build_dir.mkdir(exist_ok=True)
+
 
 def figure_project_base_directory():
     # check for given directory
     # check for current working directory
     # check that project file exists
-    # check that any auxilliary files exist
+    # check that any auxiliary files exist
     pass
 
 class Compiler:
 
     compiler_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/cl.exe"
-    response_filename:str = "c:/CppTestFile/build/CompilerResponseFile.rsp"
+    response_filename:str = "build/CompilerResponseFile.rsp"
     compile_cmd:str = compiler_path + " @" + response_filename
 
     def __init__(self):
         pass
 
     def write_output_directory(self, response_file: TextIO):
-        response_file.write('/Fo:"c:/CppTestFile/build/"\n')
+        response_file.write('/Fo:"build/"\n')
 
     def write_source_files(self, response_file: TextIO):
-        response_file.write('"c:/CppTestFile/Main.Cpp"\n')
-        response_file.write('"c:/CppTestFile/StaticLibCode.Cpp"\n')
-        response_file.write('"c:/CppTestFile/DllCode.Cpp"\n')
+        response_file.write('"Main.Cpp"\n')
+        response_file.write('"StaticLibCode.Cpp"\n')
+        response_file.write('"DllCode.Cpp"\n')
 
 
     def generate_response_file(self):
@@ -57,17 +64,17 @@ class StaticLibrarian:
 
     librarian_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/lib.exe"
-    response_filename:str = "c:/CppTestFile/build/LibrarianResponseFile.rsp"
+    response_filename:str = "build/LibrarianResponseFile.rsp"
     librarian_cmd:str = librarian_path + " @" + response_filename
 
     def __init__(self):
         pass
 
     def write_output_library_name(self, response_file: TextIO):
-        response_file.write('/OUT:"c:/CppTestFile/build/StaticLib.lib"\n')
+        response_file.write('/OUT:"build/StaticLib.lib"\n')
 
     def write_input_obj_names(self, response_file: TextIO):
-        response_file.write('"c:/CppTestFile/build/StaticLibCode.obj"\n')
+        response_file.write('"build/StaticLibCode.obj"\n')
 
     def generate_response_file(self):
         with open(self.response_filename, "wt") as response_file:
@@ -85,17 +92,17 @@ class StaticLibrarian:
 class DllLinker:
     dll_linker_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
-    response_filename = "c:/CppTestFile/build/DllLinkerResponseFile.rsp"
+    response_filename = "build/DllLinkerResponseFile.rsp"
     dll_link_cmd:str = dll_linker_path + " @" + response_filename
 
     def __init__(self):
         pass
 
     def write_dll_output_filename(self, response_file: TextIO):
-        response_file.write('/OUT:"c:/CppTestFile/build/Dll.dll"\n')
+        response_file.write('/OUT:"build/Dll.dll"\n')
 
     def write_input_obj_filenames(self, response_file: TextIO):
-        response_file.write('"c:/CppTestFile/build/DllCode.obj"\n')
+        response_file.write('"build/DllCode.obj"\n')
 
     def write_standard_lib_filenames(self, response_file: TextIO):
         response_file.write(
@@ -132,17 +139,17 @@ class DllLinker:
 class ExeLinker:
     exe_linker_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
-    response_filename = "c:/CppTestFile/build/ExeLinkerResponseFile.rsp"
+    response_filename = "build/ExeLinkerResponseFile.rsp"
     exe_link_cmd:str = exe_linker_path + " @" + response_filename
 
     def __init__(self):
         pass
 
     def write_exe_output_filename(self, response_file: TextIO):
-        response_file.write('/OUT:"c:/CppTestFile/build/Main.exe"\n')
+        response_file.write('/OUT:"build/Main.exe"\n')
 
     def write_input_obj_filenames(self, response_file: TextIO):
-        response_file.write('"c:/CppTestFile/build/Main.obj"\n')
+        response_file.write('"build/Main.obj"\n')
 
     def write_standard_lib_filenames(self, response_file: TextIO):
         response_file.write(
@@ -172,7 +179,10 @@ class ExeLinker:
         print(completed_process.stdout.decode("utf-8"))
 
 
+
+
 def main():
+    make_build_dir()
     compiler = Compiler()
     compiler.compile()
     static_librarian = StaticLibrarian()
