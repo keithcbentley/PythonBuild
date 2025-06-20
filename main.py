@@ -175,6 +175,19 @@ class DllLinker:
         print(completed_process.stdout.decode("utf-8"))
 
 
+class ExeLinkJob:
+    obj_file_paths: list[Path]
+    output_exe_path: Path
+
+    def __init__(self) -> None:
+        self.obj_file_paths = []
+
+    def add_obj_file_path(self, obj_file_path: Path) -> None:
+        self.obj_file_paths.append(obj_file_path)
+
+    def set_output_exe_path(self, output_exe_path: Path) -> None:
+        self.output_exe_path = output_exe_path
+
 
 class ExeLinker:
     exe_linker_path:str = \
@@ -186,12 +199,13 @@ class ExeLinker:
         pass
 
     @staticmethod
-    def write_exe_output_filename(response_file: TextIO):
-        response_file.write('/OUT:"build/Main.exe"\n')
+    def write_exe_output_filename(response_file: TextIO, exe_output_path: Path) -> None:
+        response_file.write(f'/OUT:"{exe_output_path}"\n')
 
     @staticmethod
-    def write_input_obj_filenames(response_file: TextIO):
-        response_file.write('"build/Main.obj"\n')
+    def write_input_obj_filenames(response_file: TextIO, input_object_file_paths: list[Path]):
+        for input_object_file_path in input_object_file_paths:
+            response_file.write(f'"{input_object_file_path}"\n')
 
     @staticmethod
     def write_standard_lib_filenames(response_file: TextIO):
@@ -208,14 +222,14 @@ class ExeLinker:
         response_file.write(
             '"c:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/SDK/lib/uuid.lib"\n')
 
-    def generate_response_file(self):
+    def generate_response_file(self, exe_link_job: ExeLinkJob) -> None:
         with open(self.response_filename, "wt") as response_file:
-            self.write_exe_output_filename(response_file)
-            self.write_input_obj_filenames(response_file)
+            self.write_exe_output_filename(response_file, exe_link_job.output_exe_path)
+            self.write_input_obj_filenames(response_file, exe_link_job.obj_file_paths)
             self.write_standard_lib_filenames(response_file)
 
-    def link(self):
-        self.generate_response_file()
+    def link(self, exe_link_job: ExeLinkJob) -> None:
+        self.generate_response_file(exe_link_job)
 #        print(self.exe_link_cmd)
         completed_process  = subprocess.run(self.exe_link_cmd,
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -249,9 +263,12 @@ def main():
     dll_linker = DllLinker()
     dll_linker.link(dll_link_job)
 
+    exe_link_job = ExeLinkJob()
+    exe_link_job.set_output_exe_path(Path("build/Main.exe"))
+    exe_link_job.add_obj_file_path(Path("build/Main.obj"))
 
     exe_linker = ExeLinker()
-    exe_linker.link()
+    exe_linker.link(exe_link_job)
 
 
 if __name__ == "__main__":
