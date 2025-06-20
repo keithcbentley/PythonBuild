@@ -5,12 +5,12 @@ from pathlib import Path
 
 
 
-g_build_dir:Path
+g_build_dir_path:Path
 
 def make_build_dir() -> None:
-    global g_build_dir
-    g_build_dir=Path(os.getcwd()) / "build"
-    g_build_dir.mkdir(exist_ok=True)
+    global g_build_dir_path
+    g_build_dir_path=Path(os.getcwd()) / "build"
+    g_build_dir_path.mkdir(exist_ok=True)
 
 
 class CompileJob:
@@ -34,32 +34,31 @@ class CompileJob:
 class CppCompiler:
     compiler_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/cl.exe"
-    response_filename:str = "build/CompilerResponseFile.rsp"
-    compile_cmd:str = compiler_path + " @" + response_filename
+    response_file_name:str = "build/CompilerResponseFile.rsp"
+    compile_cmd:str = compiler_path + " @" + response_file_name
 
     def __init__(self) -> None:
         pass
 
     @staticmethod
-    def write_output_directory(response_file: TextIO, output_directory_path: Path) -> None:
+    def write_output_directory_name(response_file: TextIO, output_directory_path: Path) -> None:
         response_file.write(f'/Fo:"{output_directory_path}/"\n')
 
     @staticmethod
-    def write_source_files(response_file: TextIO, source_file_paths: list[Path]) -> None:
+    def write_source_file_names(response_file: TextIO, source_file_paths: list[Path]) -> None:
         for source_file_path in source_file_paths:
             response_file.write(f'"{source_file_path}"\n')
 
 
     def generate_response_file(self, compile_job: CompileJob) -> None:
-        with open(self.response_filename, "wt") as response_file:
+        with open(self.response_file_name, "wt") as response_file:
             response_file.write('/c\n')
-            self.write_output_directory(response_file, compile_job.output_directory_path)
-            self.write_source_files(response_file, compile_job.source_file_paths)
+            self.write_output_directory_name(response_file, compile_job.output_directory_path)
+            self.write_source_file_names(response_file, compile_job.source_file_paths)
 
 
     def compile(self, compile_job: CompileJob) -> None:
         self.generate_response_file(compile_job)
-        #print(self.compile_cmd)
         completed_process  = subprocess.run(self.compile_cmd,
                                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print(completed_process.stdout.decode("utf-8"))
@@ -82,8 +81,8 @@ class StaticLibrarianJob:
 class StaticLibrarian:
     librarian_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/lib.exe"
-    response_filename:str = "build/LibrarianResponseFile.rsp"
-    librarian_cmd:str = librarian_path + " @" + response_filename
+    response_file_name:str = "build/LibrarianResponseFile.rsp"
+    librarian_cmd:str = librarian_path + " @" + response_file_name
 
     def __init__(self) -> None:
         pass
@@ -98,13 +97,12 @@ class StaticLibrarian:
             response_file.write(f'"{input_object_file_path}"\n')
 
     def generate_response_file(self, static_lib_job: StaticLibrarianJob) -> None:
-        with open(self.response_filename, "wt") as response_file:
+        with open(self.response_file_name, "wt") as response_file:
             self.write_input_obj_names(response_file, static_lib_job.obj_file_paths)
             self.write_output_library_name(response_file, static_lib_job.output_library_path)
 
     def make_static_lib(self, static_lib_job: StaticLibrarianJob) -> None:
         self.generate_response_file(static_lib_job)
-        #print(self.librarian_cmd)
         completed_process  = subprocess.run(self.librarian_cmd,
                                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print(completed_process.stdout.decode("utf-8"))
@@ -128,23 +126,23 @@ class DllLinkJob:
 class DllLinker:
     dll_linker_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
-    response_filename = "build/DllLinkerResponseFile.rsp"
-    dll_link_cmd:str = dll_linker_path + " @" + response_filename
+    response_file_name = "build/DllLinkerResponseFile.rsp"
+    dll_link_cmd:str = dll_linker_path + " @" + response_file_name
 
     def __init__(self) -> None:
         pass
 
     @staticmethod
-    def write_dll_output_filename(response_file: TextIO, output_dll_path: Path) -> None:
+    def write_output_dll_name(response_file: TextIO, output_dll_path: Path) -> None:
         response_file.write(f'/OUT:"{output_dll_path}"\n')
 
     @staticmethod
-    def write_input_obj_filenames(response_file: TextIO, input_object_file_paths: list[Path]):
-        for input_object_file_path in input_object_file_paths:
-            response_file.write(f'"{input_object_file_path}"\n')
+    def write_obj_file_names(response_file: TextIO, obj_file_paths: list[Path]):
+        for obj_file_path in obj_file_paths:
+            response_file.write(f'"{obj_file_path}"\n')
 
     @staticmethod
-    def write_standard_lib_filenames(response_file: TextIO):
+    def write_standard_lib_file_names(response_file: TextIO):
         response_file.write(
             '"c:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/lib/libcmt.lib"\n')
         response_file.write(
@@ -160,16 +158,15 @@ class DllLinker:
 
 
     def generate_response_file(self, dll_link_job: DllLinkJob) -> None:
-        with open(self.response_filename, "wt") as response_file:
+        with open(self.response_file_name, "wt") as response_file:
             response_file.write('/DLL\n')
-            self.write_dll_output_filename(response_file, dll_link_job.output_dll_path)
-            self.write_input_obj_filenames(response_file, dll_link_job.obj_file_paths)
-            self.write_standard_lib_filenames(response_file)
+            self.write_output_dll_name(response_file, dll_link_job.output_dll_path)
+            self.write_obj_file_names(response_file, dll_link_job.obj_file_paths)
+            self.write_standard_lib_file_names(response_file)
 
 
     def link(self, dll_link_job: DllLinkJob) -> None:
         self.generate_response_file(dll_link_job)
-        #print(self.dll_link_cmd)
         completed_process  = subprocess.run(self.dll_link_cmd,
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print(completed_process.stdout.decode("utf-8"))
@@ -192,23 +189,23 @@ class ExeLinkJob:
 class ExeLinker:
     exe_linker_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
-    response_filename = "build/ExeLinkerResponseFile.rsp"
-    exe_link_cmd:str = exe_linker_path + " @" + response_filename
+    response_file_name = "build/ExeLinkerResponseFile.rsp"
+    exe_link_cmd:str = exe_linker_path + " @" + response_file_name
 
     def __init__(self) -> None:
         pass
 
     @staticmethod
-    def write_exe_output_filename(response_file: TextIO, exe_output_path: Path) -> None:
-        response_file.write(f'/OUT:"{exe_output_path}"\n')
+    def write_output_exe_file_name(response_file: TextIO, output_exe_path: Path) -> None:
+        response_file.write(f'/OUT:"{output_exe_path}"\n')
 
     @staticmethod
-    def write_input_obj_filenames(response_file: TextIO, input_object_file_paths: list[Path]):
-        for input_object_file_path in input_object_file_paths:
-            response_file.write(f'"{input_object_file_path}"\n')
+    def write_obj_file_names(response_file: TextIO, obj_file_paths: list[Path]):
+        for obj_file_path in obj_file_paths:
+            response_file.write(f'"{obj_file_path}"\n')
 
     @staticmethod
-    def write_standard_lib_filenames(response_file: TextIO):
+    def write_standard_lib_file_names(response_file: TextIO):
         response_file.write(
             '"c:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/lib/libcmt.lib"\n')
         response_file.write(
@@ -223,10 +220,10 @@ class ExeLinker:
             '"c:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/SDK/lib/uuid.lib"\n')
 
     def generate_response_file(self, exe_link_job: ExeLinkJob) -> None:
-        with open(self.response_filename, "wt") as response_file:
-            self.write_exe_output_filename(response_file, exe_link_job.output_exe_path)
-            self.write_input_obj_filenames(response_file, exe_link_job.obj_file_paths)
-            self.write_standard_lib_filenames(response_file)
+        with open(self.response_file_name, "wt") as response_file:
+            self.write_output_exe_file_name(response_file, exe_link_job.output_exe_path)
+            self.write_obj_file_names(response_file, exe_link_job.obj_file_paths)
+            self.write_standard_lib_file_names(response_file)
 
     def link(self, exe_link_job: ExeLinkJob) -> None:
         self.generate_response_file(exe_link_job)
