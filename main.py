@@ -17,7 +17,7 @@ class CompileJob:
     source_file_paths: list[Path]
     output_directory_path: Path
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.source_file_paths = []
 
     def add_source_file_path(self, source_file_path: Path) -> None:
@@ -38,7 +38,7 @@ class CppCompiler:
     response_filename:str = "build/CompilerResponseFile.rsp"
     compile_cmd:str = compiler_path + " @" + response_filename
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
@@ -66,6 +66,18 @@ class CppCompiler:
         print(completed_process.stdout.decode("utf-8"))
 
 
+class StaticLibrarianJob:
+    obj_file_paths: list[Path]
+    output_library_path: Path
+
+    def __init__(self) -> None:
+        self.obj_file_paths = []
+
+    def add_obj_file_path(self, obj_file_path: Path) -> None:
+        self.obj_file_paths.append(obj_file_path)
+
+    def set_output_library_path(self, output_library_path: Path) -> None:
+        self.output_library_path = output_library_path
 
 
 class StaticLibrarian:
@@ -75,24 +87,25 @@ class StaticLibrarian:
     response_filename:str = "build/LibrarianResponseFile.rsp"
     librarian_cmd:str = librarian_path + " @" + response_filename
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
-    def write_output_library_name(response_file: TextIO):
-        response_file.write('/OUT:"build/StaticLib.lib"\n')
+    def write_output_library_name(response_file: TextIO, output_library_path: Path) -> None:
+        response_file.write(f'/OUT:"{output_library_path}"\n')
 
     @staticmethod
-    def write_input_obj_names(response_file: TextIO):
-        response_file.write('"build/StaticLibCode.obj"\n')
+    def write_input_obj_names(response_file: TextIO, input_object_file_paths: list[Path]):
+        for input_object_file_path in input_object_file_paths:
+            response_file.write(f'"{input_object_file_path}"\n')
 
-    def generate_response_file(self):
+    def generate_response_file(self, static_lib_job: StaticLibrarianJob) -> None:
         with open(self.response_filename, "wt") as response_file:
-            self.write_input_obj_names(response_file)
-            self.write_output_library_name(response_file)
+            self.write_input_obj_names(response_file, static_lib_job.obj_file_paths)
+            self.write_output_library_name(response_file, static_lib_job.output_library_path)
 
-    def make_static_lib(self):
-        self.generate_response_file()
+    def make_static_lib(self, static_lib_job: StaticLibrarianJob) -> None:
+        self.generate_response_file(static_lib_job)
         #print(self.librarian_cmd)
         completed_process  = subprocess.run(self.librarian_cmd,
                                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -105,7 +118,7 @@ class DllLinker:
     response_filename = "build/DllLinkerResponseFile.rsp"
     dll_link_cmd:str = dll_linker_path + " @" + response_filename
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
@@ -155,7 +168,7 @@ class ExeLinker:
     response_filename = "build/ExeLinkerResponseFile.rsp"
     exe_link_cmd:str = exe_linker_path + " @" + response_filename
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
@@ -199,20 +212,23 @@ class ExeLinker:
 
 def main():
     print("current working directory: " + os.getcwd())
-    p:Path = Path(os.getcwd())
 
     make_build_dir()
     compile_job = CompileJob()
     compile_job.add_source_file_path(Path("Main.cpp"))
     compile_job.add_source_file_path(Path("StaticLibCode.cpp"))
     compile_job.add_source_file_path(Path("DllCode.cpp"))
-    compile_job.set_output_directory_path(Path("build/"))
-    compile_job.print_source_paths()
-
+    compile_job.set_output_directory_path(Path("build"))
+#    compile_job.print_source_paths()
     cpp_compiler = CppCompiler()
     cpp_compiler.compile(compile_job)
+
+    static_librarian_job = StaticLibrarianJob()
+    static_librarian_job.set_output_library_path(Path("build/StaticLib.lib"))
+    static_librarian_job.add_obj_file_path(Path("build/StaticLibCode.obj"))
     static_librarian = StaticLibrarian()
-    static_librarian.make_static_lib()
+    static_librarian.make_static_lib(static_librarian_job)
+
     dll_linker = DllLinker()
     dll_linker.link()
     exe_linker = ExeLinker()
