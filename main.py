@@ -4,13 +4,39 @@ from typing import TextIO
 from pathlib import Path
 
 
+g_src_root_dir_name:str = "src"
+g_build_root_dir_name:str = "build"
 
-g_build_dir_path:Path
+g_project_root_dir_path: Path
+g_src_root_dir_path: Path
+g_build_root_dir_path: Path
 
-def make_build_dir() -> None:
-    global g_build_dir_path
-    g_build_dir_path=Path(os.getcwd()) / "build"
-    g_build_dir_path.mkdir(exist_ok=True)
+def is_relative(path:Path) -> bool:
+    return not path.is_absolute()
+
+def set_up_project_dirs() -> None:
+    global g_src_root_dir_name
+    global g_build_root_dir_name
+
+    global g_project_root_dir_path
+    global g_src_root_dir_path
+    global g_build_root_dir_path
+
+    g_project_root_dir_path=Path(os.getcwd())
+
+    g_src_root_dir_path=Path(g_src_root_dir_name)
+    if is_relative(g_src_root_dir_path):
+        g_src_root_dir_path= g_project_root_dir_path / g_src_root_dir_path
+
+    g_build_root_dir_path=Path(g_build_root_dir_name)
+    if is_relative(g_build_root_dir_path):
+        g_build_root_dir_path= g_project_root_dir_path / g_build_root_dir_path
+
+    g_build_root_dir_path.mkdir(exist_ok=True)
+
+    print("project root: " + str(g_project_root_dir_path))
+    print("src root: " + str(g_src_root_dir_path))
+    print("build root: " + str(g_build_root_dir_path))
 
 
 class CompileJob:
@@ -236,15 +262,13 @@ class ExeLinker:
 
 
 def main():
-    print("current working directory: " + os.getcwd())
+    set_up_project_dirs()
 
-    make_build_dir()
     compile_job = CompileJob()
+    compile_job.set_output_directory_path(Path("build"))
     compile_job.add_source_file_path(Path("Main.cpp"))
     compile_job.add_source_file_path(Path("StaticLibCode.cpp"))
     compile_job.add_source_file_path(Path("DllCode.cpp"))
-    compile_job.set_output_directory_path(Path("build"))
-#    compile_job.print_source_paths()
     cpp_compiler = CppCompiler()
     cpp_compiler.compile(compile_job)
 
@@ -263,7 +287,6 @@ def main():
     exe_link_job = ExeLinkJob()
     exe_link_job.set_output_exe_path(Path("build/Main.exe"))
     exe_link_job.add_obj_file_path(Path("build/Main.obj"))
-
     exe_linker = ExeLinker()
     exe_linker.link(exe_link_job)
 
