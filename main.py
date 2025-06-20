@@ -32,7 +32,6 @@ class CompileJob:
 
 
 class CppCompiler:
-
     compiler_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/cl.exe"
     response_filename:str = "build/CompilerResponseFile.rsp"
@@ -81,7 +80,6 @@ class StaticLibrarianJob:
 
 
 class StaticLibrarian:
-
     librarian_path:str = \
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/lib.exe"
     response_filename:str = "build/LibrarianResponseFile.rsp"
@@ -111,6 +109,21 @@ class StaticLibrarian:
                                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print(completed_process.stdout.decode("utf-8"))
 
+class DllLinkJob:
+    obj_file_paths: list[Path]
+    output_dll_path: Path
+
+    def __init__(self) -> None:
+        self.obj_file_paths = []
+
+    def add_obj_file_path(self, obj_file_path: Path) -> None:
+        self.obj_file_paths.append(obj_file_path)
+
+    def set_output_dll_path(self, output_dll_path: Path) -> None:
+        self.output_dll_path = output_dll_path
+
+
+
 
 class DllLinker:
     dll_linker_path:str = \
@@ -122,12 +135,13 @@ class DllLinker:
         pass
 
     @staticmethod
-    def write_dll_output_filename(response_file: TextIO):
-        response_file.write('/OUT:"build/Dll.dll"\n')
+    def write_dll_output_filename(response_file: TextIO, output_dll_path: Path) -> None:
+        response_file.write(f'/OUT:"{output_dll_path}"\n')
 
     @staticmethod
-    def write_input_obj_filenames(response_file: TextIO):
-        response_file.write('"build/DllCode.obj"\n')
+    def write_input_obj_filenames(response_file: TextIO, input_object_file_paths: list[Path]):
+        for input_object_file_path in input_object_file_paths:
+            response_file.write(f'"{input_object_file_path}"\n')
 
     @staticmethod
     def write_standard_lib_filenames(response_file: TextIO):
@@ -145,16 +159,16 @@ class DllLinker:
             '"c:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/SDK/lib/uuid.lib"\n')
 
 
-    def generate_response_file(self):
+    def generate_response_file(self, dll_link_job: DllLinkJob) -> None:
         with open(self.response_filename, "wt") as response_file:
             response_file.write('/DLL\n')
-            self.write_dll_output_filename(response_file)
-            self.write_input_obj_filenames(response_file)
+            self.write_dll_output_filename(response_file, dll_link_job.output_dll_path)
+            self.write_input_obj_filenames(response_file, dll_link_job.obj_file_paths)
             self.write_standard_lib_filenames(response_file)
 
 
-    def link(self):
-        self.generate_response_file()
+    def link(self, dll_link_job: DllLinkJob) -> None:
+        self.generate_response_file(dll_link_job)
         #print(self.dll_link_cmd)
         completed_process  = subprocess.run(self.dll_link_cmd,
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -229,8 +243,13 @@ def main():
     static_librarian = StaticLibrarian()
     static_librarian.make_static_lib(static_librarian_job)
 
+    dll_link_job = DllLinkJob()
+    dll_link_job.set_output_dll_path(Path("build/DLL.dll"))
+    dll_link_job.add_obj_file_path(Path("build/DLLCode.obj"))
     dll_linker = DllLinker()
-    dll_linker.link()
+    dll_linker.link(dll_link_job)
+
+
     exe_linker = ExeLinker()
     exe_linker.link()
 
