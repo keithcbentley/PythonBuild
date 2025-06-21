@@ -12,18 +12,15 @@ def is_relative(path:Path) -> bool:
 
 
 class ProjectRoot:
-    m_project_root_dir_path: Path
-    m_src_root_dir_path: Path
-    m_build_root_dir_path: Path
 
     def __init__(self) -> None:
-        self.m_project_root_dir_path = Path(os.getcwd())
+        self.m_project_root_dir_path: Path = Path(os.getcwd())
 
-        self.m_src_root_dir_path = Path(g_src_root_dir_name)
+        self.m_src_root_dir_path: Path= Path(g_src_root_dir_name)
         if is_relative(self.m_src_root_dir_path):
             self.m_src_root_dir_path = self.m_project_root_dir_path / self.m_src_root_dir_path
 
-        self.m_build_root_dir_path = Path(g_build_root_dir_name)
+        self.m_build_root_dir_path: Path = Path(g_build_root_dir_name)
         if is_relative(self.m_build_root_dir_path):
             self.m_build_root_dir_path = self.m_project_root_dir_path / self.m_build_root_dir_path
 
@@ -38,11 +35,10 @@ g_project_root: ProjectRoot = ProjectRoot()
 
 
 class CompileJob:
-    m_source_file_paths: list[Path]
-    m_output_directory_path: Path
 
     def __init__(self) -> None:
-        self.m_source_file_paths = []
+        self.m_source_file_paths: list[Path] = []
+        self.m_output_directory_path: Path = Path()
 
     def add_source_file_path(self, source_file_path: Path) -> None:
         self.m_source_file_paths.append(source_file_path)
@@ -56,13 +52,12 @@ class CompileJob:
 
 
 class CppCompiler:
-    m_compiler_path:str = \
-        "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/cl.exe"
-    m_response_file_name:str = "build/CompilerResponseFile.rsp"
-    m_compile_cmd:str = m_compiler_path + " @" + m_response_file_name
 
     def __init__(self) -> None:
-        pass
+        self.m_compiler_path: str = \
+            "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/cl.exe"
+        self.m_response_file_name: str = "build/CompilerResponseFile.rsp"
+        self.m_compile_cmd: str = self.m_compiler_path + " @" + self.m_response_file_name
 
     @staticmethod
     def write_output_directory_name(response_file: TextIO, output_directory_path: Path) -> None:
@@ -89,11 +84,10 @@ class CppCompiler:
 
 
 class StaticLibrarianJob:
-    m_obj_file_paths: list[Path]
-    m_output_library_path: Path
 
     def __init__(self) -> None:
-        self.m_obj_file_paths = []
+        self.m_obj_file_paths: list[Path] = []
+        self.m_output_library_path: Path = Path()
 
     def add_obj_file_path(self, obj_file_path: Path) -> None:
         self.m_obj_file_paths.append(obj_file_path)
@@ -103,13 +97,12 @@ class StaticLibrarianJob:
 
 
 class StaticLibrarian:
-    m_librarian_path:str = \
-        "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/lib.exe"
-    m_response_file_name:str = "build/LibrarianResponseFile.rsp"
-    m_librarian_cmd:str = m_librarian_path + " @" + m_response_file_name
 
     def __init__(self) -> None:
-        pass
+        self.m_librarian_path: str = \
+            "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/lib.exe"
+        self.m_response_file_name: str = "build/LibrarianResponseFile.rsp"
+        self.m_librarian_cmd: str = self.m_librarian_path + " @" + self.m_response_file_name
 
     @staticmethod
     def write_output_library_name(response_file: TextIO, output_library_path: Path) -> None:
@@ -132,11 +125,10 @@ class StaticLibrarian:
         print(completed_process.stdout.decode("utf-8"))
 
 class DllLinkJob:
-    m_obj_file_paths: list[Path]
-    m_output_dll_path: Path
 
     def __init__(self) -> None:
-        self.m_obj_file_paths = []
+        self.m_obj_file_paths: list[Path] = []
+        self.m_output_dll_path: Path = Path()
 
     def add_obj_file_path(self, obj_file_path: Path) -> None:
         self.m_obj_file_paths.append(obj_file_path)
@@ -148,13 +140,12 @@ class DllLinkJob:
 
 
 class DllLinker:
-    m_dll_linker_path:str = \
-        "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
-    m_response_file_name = "build/DllLinkerResponseFile.rsp"
-    m_dll_link_cmd:str = m_dll_linker_path + " @" + m_response_file_name
 
     def __init__(self) -> None:
-        pass
+        self.m_dll_linker_path: str = \
+            "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
+        self.m_response_file_name: str = "build/DllLinkerResponseFile.rsp"
+        self.m_dll_link_cmd: str = self.m_dll_linker_path + " @" + self.m_response_file_name
 
     @staticmethod
     def write_output_dll_name(response_file: TextIO, output_dll_path: Path) -> None:
@@ -197,11 +188,10 @@ class DllLinker:
 
 
 class ExeLinkJob:
-    m_obj_file_paths: list[Path]
-    m_output_exe_path: Path
 
     def __init__(self) -> None:
-        self.m_obj_file_paths = []
+        self.m_obj_file_paths: list[Path] = []
+        self.m_output_exe_path: Path = Path()
 
     def add_obj_file_path(self, obj_file_path: Path) -> None:
         self.m_obj_file_paths.append(obj_file_path)
@@ -211,13 +201,12 @@ class ExeLinkJob:
 
 
 class ExeLinker:
-    m_exe_linker_path:str = \
-        "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
-    m_response_file_name = "build/ExeLinkerResponseFile.rsp"
-    m_exe_link_cmd:str = m_exe_linker_path + " @" + m_response_file_name
 
     def __init__(self) -> None:
-        pass
+        self.m_exe_linker_path: str = \
+            "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/SDK/ScopeCppSDK/vc15/VC/bin/link.exe"
+        self.m_response_file_name: str = "build/ExeLinkerResponseFile.rsp"
+        self.m_exe_link_cmd: str = self.m_exe_linker_path + " @" + self.m_response_file_name
 
     @staticmethod
     def write_output_exe_file_name(response_file: TextIO, output_exe_path: Path) -> None:
